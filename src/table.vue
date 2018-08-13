@@ -22,6 +22,8 @@
 </template>
 
 <script>
+  import { nodeOffset } from './util';
+
   export default {
     name: 'SimpleTable',
     props: {
@@ -30,6 +32,10 @@
         default: true
       },
       data: {
+        type: Array,
+        default: []
+      },
+      colHeaders: {
         type: Array,
         default: []
       }
@@ -42,12 +48,6 @@
     },
     data() {
       return {
-        data: [
-          ['2017', 10, 11, 12],
-          ['2018', 20, 11, 14],
-          ['2019', 30, 15, 12]
-        ],
-        colHeaders: ['Title', 'Description', 'Comments', 'Cover'],
         inputHolderVisible: false,
         inputHolderStyle: {
           left: '',
@@ -75,15 +75,15 @@
       },
       focusCell(cell) {
           var currentRow = cell.parentElement;
-          var $target = $(cell).eq(0);
-          var offset = $target.offset();
+          var offset = nodeOffset(cell);
           this.inputHolderStyle.top = offset.top + 'px';
           this.inputHolderStyle.left = offset.left + 'px';
           
-          this.textareaStyle.width = $target.width() + 'px';
-          this.textareaStyle.height = $target.height() + 'px';
-          this.textareaStyle.fontSize = $target.css('fontSize');
-          this.textareaStyle.lineHeight = $target.height() + 'px';
+          var cellStyle = window.getComputedStyle(cell);
+          this.textareaStyle.width = cellStyle.width;
+          this.textareaStyle.height = cellStyle.height;
+          this.textareaStyle.fontSize = cellStyle.fontSize;
+          this.textareaStyle.lineHeight = cellStyle.height;
           this.inputHolderVisible = true;
           // cell info clicked, col and row
           var col = Array.from(currentRow.querySelectorAll('td')).indexOf(cell);
