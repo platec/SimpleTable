@@ -4,3 +4,5 @@ vue table component
 import SimpleTable from 'SimpleTable';
 Vue.use(SimpleTable);
 ```
+
+![edit-sample](./screenshot/edit.png)
