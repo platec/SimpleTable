@@ -17,9 +17,11 @@ export default {
         </colgroup>
         <thead>
           <tr>
-            { this._l(this.columns, column => {
-              return <th>{ column.label }</th>;
-            }) }
+            { 
+              this._l(this.columns, column => {
+                return <th>{ column.label }</th>
+              })
+            }
           </tr>
         </thead>
       </table>
@@ -27,7 +29,6 @@ export default {
   },
   data() {
     var columns = this.store.states.columns;
-    console.log(columns);
     return {
       columns
     };

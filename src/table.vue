@@ -12,9 +12,9 @@
 <script>
   import { nodeOffset } from './util';
   import TableHeader from './table-header';
-  import TableStore from './table-store';
+  import store from './table-store';
   import TableColumn from './table-column';
-  import TableBody from './table-body';
+  import TableBody from './table-body.vue';
   import Vue from 'vue';
 
   Vue.prototype._l = (list, cb) => {
@@ -48,13 +48,12 @@
     },
     data() {
       var table = document.querySelector('table');
-      var store = new TableStore(table);
       return {
         store
       }
     },
     created() {
-      this.dataOld = JSON.parse(JSON.stringify(this.data));
+      this.store.states.oldData = JSON.parse(JSON.stringify(this.data));
       var columns = [];
       this.$slots.default.forEach(item => {
         if (item.componentOptions) {

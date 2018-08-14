@@ -1,13 +1,19 @@
-const TableStore = function(table) {
-  this.table = table;
-  this.states = {
-    data: null,
-    columns: null
-  };
-  return this;
-};
+import Vue from 'vue';
 
-export default TableStore;
-// TableStore.prototype = {
-
+// const TableStore = function(table) {
+//   this.table = table;
+//   this.states = {
+//     data: null,
+//     columns: null
+//   };
+//   return this;
 // };
+
+// export default TableStore;
+
+var store = new Vue({
+  created() {
+    this.states = {};
+  }
+});
+export default store;
