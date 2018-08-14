@@ -1,41 +1,41 @@
 <template>
-  <div>
-    <table>
-      <thead v-if="headerVisible">
-        <tr>
-          <th v-for="colHeader in colHeaders">
-            {{ colHeader }}
-          </th>
-        </tr>
-      </thead>
-      <tbody @dblclick="dblclickCell">
-        <tr v-for="row in data">
-          <td v-for="col in row">{{ col }}</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <div class="inputHolder" v-show="inputHolderVisible" :style="inputHolderStyle">
-      <textarea :style="textareaStyle" v-model="inputValue" id="textarea"></textarea>
+  <div class="simple-table">
+    <div class="simple-table-header">
+      <table-header v-if="headerVisible" :store="store"></table-header>
+    </div>
+    <div class="simple-table-body">
+      <table-body :store="store"></table-body>
     </div>
   </div>
 </template>
 
 <script>
   import { nodeOffset } from './util';
+  import TableHeader from './table-header';
+  import TableStore from './table-store';
+  import TableColumn from './table-column';
+  import TableBody from './table-body';
+  import Vue from 'vue';
+
+  Vue.prototype._l = (list, cb) => {
+    var loop = list || [];
+    var rendered = loop.map(cb);
+    return rendered;
+  }
 
   export default {
     name: 'SimpleTable',
+    components: {
+      TableHeader,
+      TableColumn,
+      TableBody
+    },
     props: {
       headerVisible: {
         type: Boolean,
         default: true
       },
       data: {
-        type: Array,
-        default: []
-      },
-      colHeaders: {
         type: Array,
         default: []
       }
@@ -47,69 +47,24 @@
       document.removeEventListener('click', this.editCompleted);
     },
     data() {
+      var table = document.querySelector('table');
+      var store = new TableStore(table);
       return {
-        inputHolderVisible: false,
-        inputHolderStyle: {
-          left: '',
-          top: ''
-        },
-        textareaStyle: {
-          width: '',
-          height: '',
-          fontSize: '',
-          lineHeight: ''
-        },
-        inputValue: ''
+        store
       }
     },
     created() {
       this.dataOld = JSON.parse(JSON.stringify(this.data));
+      var columns = [];
+      this.$slots.default.forEach(item => {
+        if (item.componentOptions) {
+          columns.push(item.componentOptions.propsData);
+        }
+      });
+      this.store.states.columns = columns;
+      this.store.states.data = this.data;
     },
     methods: {
-      dblclickCell(e) {
-        if (e.target.tagName.toUpperCase() === 'TD') {
-          var target = e.target;
-          var position = this.focusCell(target);
-          this.inputValue = this.data[position.row][position.col];
-        }
-      },
-      focusCell(cell) {
-          var currentRow = cell.parentElement;
-          var offset = nodeOffset(cell);
-          this.inputHolderStyle.top = offset.top + 'px';
-          this.inputHolderStyle.left = offset.left + 'px';
-          
-          var cellStyle = window.getComputedStyle(cell);
-          this.textareaStyle.width = cellStyle.width;
-          this.textareaStyle.height = cellStyle.height;
-          this.textareaStyle.fontSize = cellStyle.fontSize;
-          this.textareaStyle.lineHeight = cellStyle.height;
-          this.inputHolderVisible = true;
-          // cell info clicked, col and row
-          var col = Array.from(currentRow.querySelectorAll('td')).indexOf(cell);
-          var row = Array.from(currentRow.parentElement.querySelectorAll('tr')).indexOf(currentRow);
-          this.position = {col, row};
-          return {row, col};
-      },
-      editCompleted(e) {
-        var target = e.target;
-        var inputHolder = document.querySelector('.inputHolder');
-        if (target !== inputHolder && !inputHolder.contains(target)) {
-          this.inputHolderVisible = false;
-          if (this.position) {
-            // add modified class after data changed
-            // skip table header
-            let rowIndex = this.headerVisible ? this.position.row + 1 : this.position.row;
-            var cell = this.$el.querySelectorAll('table tr')[rowIndex].querySelectorAll('td')[this.position.col];      
-            if (this.dataOld[this.position.row][this.position.col] !== this.inputValue) {
-              cell.classList.add('modified');
-            } else {
-              cell.classList.remove('modified');
-            }
-            this.data[this.position.row][this.position.col] = this.inputValue;
-          }
-        }
-      }
     }
   }
 </script>
@@ -124,23 +79,10 @@
     padding: 0px 14px;
   }
   table {
-    width: 200px;
     min-height: 25px;
     line-height: 25px;
     text-align: center;
     border-collapse: collapse;
     padding: 2px;
-  }
-  .inputHolder {
-    position: absolute;
-  }
-  textarea {
-    resize : none;
-    overflow-y: hidden;
-    border: 0;
-    box-shadow: inset 0 0 0 2px #5292f7;
-  }
-  .modified {
-    color: red;
   }
 </style>
