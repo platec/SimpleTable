@@ -40,10 +40,10 @@
       };
     },
     created() {
-      this.store.$on('data', data => {
+      this.store.on('data', data => {
         this.data = data;
       });
-      this.store.$on('cellModify', (position, value) => {
+      this.store.on('cellModify', (position, value) => {
         var rows = document.querySelectorAll('tbody tr');
         var row = rows[position.row];
         var cells = row.querySelectorAll('td');
@@ -64,7 +64,7 @@
         var cell = e.target;
         var position = this.focusCell(cell);
         this.inputValue = this.data[position.row][column.prop];
-        this.store.$emit('cellVisible', true, position);
+        this.store.emit('cellVisible', true, position);
       },
       focusCell(cell) {
         var currentRow = cell.parentElement;

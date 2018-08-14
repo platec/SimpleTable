@@ -13,7 +13,7 @@
       clickoutside
     },
     created() {
-      this.store.$on('cellVisible', (visible, position) => {
+      this.store.on('cellVisible', (visible, position) => {
         this.position = position;
         this.cellVisible = visible;
       });
@@ -36,8 +36,8 @@
           var prop = this.store.states.columns[this.position.col].prop;
 
           this.store.states.data[this.position.row][prop] = this.value;
-          this.store.$emit('data', this.store.states.data);
-          this.store.$emit('cellModify', this.position, this.value);
+          this.store.emit('data', this.store.states.data);
+          this.store.emit('cellModify', this.position, this.value);
         }
         this.cellVisible = false;
       },
