@@ -156,8 +156,12 @@
         if (this.inputHolderVisible) {
           var originalRow = this.originalData[this.position.row] || {};
           if (this.inputValue !== originalRow[this.position.prop]) {
+            let history = {
+              new: JSON.parse(JSON.stringify(this.tableData)),
+              old: JSON.parse(JSON.stringify(this.originalData))
+            };
             // 存储操作历史
-            this.historyStore.push(JSON.parse(JSON.stringify(this.tableData)));            
+            this.historyStore.push(history);            
           }
           var currentRow = this.tableData[this.position.row];
           currentRow[this.position.prop] = this.inputValue;         
@@ -175,7 +179,11 @@
         // 目前row-contextmenu事件的参数只有row
         // 数据相同时无法区分，添加内部属性_id作区分
         // 存储操作历史
-        this.historyStore.push(JSON.parse(JSON.stringify(this.tableData)));         
+        let history = {
+          new: JSON.parse(JSON.stringify(this.tableData)),
+          old: JSON.parse(JSON.stringify(this.originalData))          
+        };
+        this.historyStore.push(history);         
         this.tableData = this.tableData.filter(item => {
           return item._id !== this.contextMenuRow._id;
         });
@@ -191,7 +199,11 @@
       // 增加新行
       addNewRow() {
         // 存储操作历史
-        this.historyStore.push(JSON.parse(JSON.stringify(this.tableData)));        
+        let history = {
+          new: JSON.parse(JSON.stringify(this.tableData)),
+          old: JSON.parse(JSON.stringify(this.originalData))          
+        };        
+        this.historyStore.push(history);        
         this.tableData.push({_id: this.tableData.length});
         this.contextMenuVisible = false;
         this.$emit('add-row');
@@ -199,7 +211,9 @@
       // 撤销
       handleUndo() {
         if (this.historyStore.length > 0) {
-          this.tableData = this.historyStore.pop();
+          let history = this.historyStore.pop();
+          this.tableData = history.new;
+          this.originalData = history.old;
           this.contextMenuVisible = false;
         }
       },
