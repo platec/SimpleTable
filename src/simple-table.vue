@@ -25,7 +25,7 @@
         <tbody>
           <tr @click="addNewRow">
             <td style="height:22px;">
-              <div class="itemWrapper">新增行</div>
+              <div class="itemWrapper">插入行</div>
             </td>
           </tr>
           <tr @click="deleteCurrentRow">
@@ -219,7 +219,11 @@
       },
       // 保存
       handleSave() {
+        this.originalData = JSON.parse(JSON.stringify(this.tableData));
+        this.tableData = JSON.parse(JSON.stringify(this.tableData));
         this.$emit('save', this.tableData);
+        this.historyStore = [];
+        this.contextMenuVisible = false;
       }
     }
   }
@@ -248,7 +252,7 @@
     border: 1px solid #ccc;
   }
   .contextMenu table tr td {
-    padding: 4px 6px 0;
+    padding: 4px 6px;
   }
   .contextMenu table tr:not(.disabled):hover {
     background: #f3f3f3;
