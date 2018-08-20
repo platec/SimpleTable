@@ -18,12 +18,17 @@
         this.cellVisible = visible;
       });
     },
+    mounted() {
+      this.input = document.getElementById('input');
+    },
     props: {
       store: {
         required: true
       },
       cellStyle: Object,
       value: null
+    },
+    created() {
     },
     data() {
       return {
@@ -32,12 +37,10 @@
     },
     methods: {
       hideInputHolder() {
-        if (this.position) {
+        if (this.position && this.cellVisible) {
           var prop = this.store.states.columns[this.position.col].prop;
-
-          this.store.states.data[this.position.row][prop] = this.value;
-          this.store.emit('data', this.store.states.data);
-          this.store.emit('cellModify', this.position, this.value);
+          this.store.states.data[this.position.row][prop] = this.input.value;
+          this.store.emit('cellModify', this.position, this.input.value);
         }
         this.cellVisible = false;
       },

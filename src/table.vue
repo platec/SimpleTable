@@ -1,11 +1,17 @@
 <template>
   <div class="simple-table">
+    <div class="hidden-columns">
+      <slot></slot>
+    </div>
     <div class="simple-table-header">
       <table-header v-if="headerVisible" :store="store"></table-header>
     </div>
     <div class="simple-table-body">
-      <table-body :store="store"></table-body>
+      <table-body :store="store">
+      </table-body>
     </div>
+      <table-cell store={ this.store } value={ this.inputValue }
+      style={ this.inputHolderStyle } cellStyle={ this.tableCellStyle }></table-cell>
   </div>
 </template>
 
@@ -13,8 +19,8 @@
   import { nodeOffset } from './util';
   import TableHeader from './table-header';
   import store from './table-store';
+  import TableBody from './table-body';
   import TableColumn from './table-column';
-  import TableBody from './table-body.vue';
   import Vue from 'vue';
 
   Vue.prototype._l = (list, cb) => {
@@ -27,8 +33,8 @@
     name: 'SimpleTable',
     components: {
       TableHeader,
-      TableColumn,
-      TableBody
+      TableBody,
+      TableColumn
     },
     props: {
       headerVisible: {
@@ -53,15 +59,17 @@
       }
     },
     created() {
-      this.store.states.oldData = JSON.parse(JSON.stringify(this.data));
+      this.store.commit('setOldData', JSON.parse(JSON.stringify(this.data)));
       var columns = [];
+      var _columns = [];
       this.$slots.default.forEach(item => {
         if (item.componentOptions) {
           columns.push(item.componentOptions.propsData);
+          _columns.push(item.context);
         }
       });
-      this.store.states.columns = columns;
-      this.store.states.data = this.data;
+      this.store.commit('setColumns', columns, _columns);
+      this.store.commit('setData', this.data);
     },
     methods: {
     }

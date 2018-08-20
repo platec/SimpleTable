@@ -1,20 +1,7 @@
-<template>
-  <table>
-    <colgroup>
-      <col v-for="column in columns" :name="column.prop" width="180"></col>
-    </colgroup>
-    <tbody>
-      <tr v-for="row in data" @click="handleRowClick($event, row)">
-        <td @dblclick="handleDoubleClick($event, column)" v-for="column in columns">{{ row[column.prop] }}</td>
-      </tr>
-    </tbody>
-    <table-cell :store="store" v-model="inputValue"
-      :style="inputHolderStyle" :cellStyle="tableCellStyle"></table-cell>
-  </table>
-</template>
-<script>
+
   import { nodeOffset } from './util';
   import TableCell from './table-cell.vue';
+  import './table-body.css';
 
   export default {
     name: 'TableBody',
@@ -26,12 +13,39 @@
         required: true
       }
     },
+    render() {
+      var columns = this.columns;
+      var data = this.data;
+      return (
+        <table>
+          <colgroup>
+            {
+              this._l(columns, column => {
+                return <col name={ column.name } width="180"></col>
+              })
+            }
+          </colgroup>
+          <tbody>
+            {
+              this._l(data, row => {
+                return <tr
+                        on-click={ ($event, row) => { this.handleRowClick($event, row) } }>
+                          {
+                            this._l(columns, (column, index) => {
+                              return <td on-dblclick={ $event => {
+                                this.handleDoubleClick($event, column)
+                              } }>{ row[column.prop] }</td>
+                            })
+                          }
+                        </tr>
+              })
+            }
+          </tbody>
+        </table>
+      )
+    },
     data() {
-      var columns = this.store.states.columns;
-      var data = this.store.states.data;
       return {
-        columns,
-        data,
         inputValue: null,
         cellVisible: false,
         position: null,
@@ -40,9 +54,6 @@
       };
     },
     created() {
-      this.store.on('data', data => {
-        this.data = data;
-      });
       this.store.on('cellModify', (position, value) => {
         var rows = document.querySelectorAll('tbody tr');
         var row = rows[position.row];
@@ -84,13 +95,13 @@
         this.position = {col, row};
         return {row, col};
       }
-    }
+    },
+    computed: {
+      data() {
+        return this.store.states.data;
+      },
+      columns() {
+        return this.store.states.columns;
+      }
+    }    
   };
-</script>
-
-<style scoped>
-  .modified {
-    color: red;
-  }
-</style>
-
