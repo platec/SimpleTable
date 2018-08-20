@@ -1,12 +1,7 @@
-import SimpleTable from './src/table';
-import TableColumn from './src/table-column';
+import SimpleTable from './src/simple-table.vue';
 
 SimpleTable.install = function(Vue) {
   Vue.component(SimpleTable.name, SimpleTable);
 };
 
-TableColumn.install = function(Vue) {
-  Vue.component(TableColumn.name, TableColumn);
-}
- 
-export {SimpleTable, TableColumn};
+export default SimpleTable;

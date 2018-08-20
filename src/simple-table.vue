@@ -38,7 +38,7 @@
               <div class="itemWrapper">撤销</div>
             </td>
           </tr>
-          <tr>
+          <tr @click="handleSave">
             <td style="height:22px;">
               <div class="itemWrapper">保存</div>
             </td>
@@ -89,25 +89,27 @@
           return item.property;
         });
         let tbody = document.querySelector('tbody');
-        for (let i = 0; i < data.length; i++) {
-          let row = data[i];
-          let oldRow = oldData[i];
-          for (let j in columns) {
-            let column = columns[j];
-            let rowElement = tbody.querySelectorAll('.el-table__row')[i];
-            let cell = rowElement.querySelectorAll('td')[j];
-            if (oldRow === void 0) {
-              cell.classList.add('new');
-            } else {
-              cell.classList.remove('new');
-            }
-            if (oldRow !== void 0 && row[column] !== oldRow[column]) {
-              cell.classList.add('modified');
-            } else {
-              cell.classList.remove('modified');
+        this.$nextTick(() => {
+          for (let i = 0; i < data.length; i++) {
+            let row = data[i];
+            let oldRow = oldData[i];
+            for (let j in columns) {
+              let column = columns[j];
+              let rowElement = tbody.querySelectorAll('.el-table__row')[i];
+              let cell = rowElement.querySelectorAll('td')[j];
+              if (oldRow === void 0) {
+                cell.classList.add('new');
+              } else {
+                cell.classList.remove('new');
+              }
+              if (oldRow !== void 0 && row[column] !== oldRow[column]) {
+                cell.classList.add('modified');
+              } else {
+                cell.classList.remove('modified');
+              }
             }
           }
-        }
+        });
       }
     },
     methods: {
@@ -154,7 +156,7 @@
         if (this.inputHolderVisible) {
           var originalRow = this.originalData[this.position.row] || {};
           if (this.inputValue !== originalRow[this.position.prop]) {
-            // store history
+            // 存储操作历史
             this.historyStore.push(JSON.parse(JSON.stringify(this.tableData)));            
           }
           var currentRow = this.tableData[this.position.row];
@@ -172,7 +174,7 @@
       deleteCurrentRow() {
         // 目前row-contextmenu事件的参数只有row
         // 数据相同时无法区分，添加内部属性_id作区分
-        // store history
+        // 存储操作历史
         this.historyStore.push(JSON.parse(JSON.stringify(this.tableData)));         
         this.tableData = this.tableData.filter(item => {
           return item._id !== this.contextMenuRow._id;
@@ -181,15 +183,18 @@
           return item._id !== this.contextMenuRow._id;
         });
         this.contextMenuVisible = false;
+        this.$emit('delete-row', this.contextMenuRow);
       },
       handleClick(row, column, cell, event) {
+        this.$emit('cell-click', row, column, cell, event);
       },
       // 增加新行
       addNewRow() {
-        // store history
+        // 存储操作历史
         this.historyStore.push(JSON.parse(JSON.stringify(this.tableData)));        
         this.tableData.push({_id: this.tableData.length});
         this.contextMenuVisible = false;
+        this.$emit('add-row');
       },
       // 撤销
       handleUndo() {
@@ -197,6 +202,10 @@
           this.tableData = this.historyStore.pop();
           this.contextMenuVisible = false;
         }
+      },
+      // 保存
+      handleSave() {
+        this.$emit('save', this.tableData);
       }
     }
   }
