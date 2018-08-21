@@ -78,7 +78,10 @@
         inputHolderVisible: false,
         contextMenuVisible: false,
         contextMenuRow: null,
-        historyStore: []
+        historyStore: [],
+        rowsAdded: [], // 新增的行
+        rowsDeleted: [], // 删除的行
+        rowsModified: [] // 修改的行
       };
     },
     watch: {
@@ -195,9 +198,24 @@
         });
         this.originalData = this.originalData.filter(item => {
           return item._id !== this.contextMenuRow._id;
+        new Promise(resolve => {
+          this.$emit('delete-row', this.contextMenuRow, resolve);
+        }).then(() => {
+          // 存储操作历史
+          let history = {
+            new: JSON.parse(JSON.stringify(this.tableData)),
+            old: JSON.parse(JSON.stringify(this.originalData)),
+            operation: 'delete'     
+          };
+          this.historyStore.push(history);         
+          this.tableData = this.tableData.filter(item => {
+            return item._id !== this.contextMenuRow._id;
+          });
+          this.originalData = this.originalData.filter(item => {
+            return item._id !== this.contextMenuRow._id;
+          });
+          this.contextMenuVisible = false;
         });
-        this.contextMenuVisible = false;
-        this.$emit('delete-row', this.contextMenuRow);
       },
       handleClick(row, column, cell, event) {
         this.$emit('cell-click', row, column, cell, event);
@@ -207,7 +225,8 @@
         // 存储操作历史
         let history = {
           new: JSON.parse(JSON.stringify(this.tableData)),
-          old: JSON.parse(JSON.stringify(this.originalData))          
+          old: JSON.parse(JSON.stringify(this.originalData)),
+          operation: 'add'
         };        
         this.historyStore.push(history);        
         this.tableData.push({_id: this.tableData.length});
@@ -234,6 +253,9 @@
           this.historyStore = [];
           this.contextMenuVisible = false;
         });
+      },
+      diff() {
+        // let 
       }
     }
   }
