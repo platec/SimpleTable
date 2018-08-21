@@ -66,7 +66,7 @@
       }
     },
     data() {
-      var tableData = this.data.map((item, index) => {
+      var tableData = JSON.parse(JSON.stringify(this.data)).map((item, index) => {
         item._id = index;
         return item;
       });
@@ -222,6 +222,7 @@
         this.originalData = JSON.parse(JSON.stringify(this.tableData));
         this.tableData = JSON.parse(JSON.stringify(this.tableData));
         this.$emit('save', this.tableData);
+        this.$emit('update:data', this.tableData);
         this.historyStore = [];
         this.contextMenuVisible = false;
       }
