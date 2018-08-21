@@ -69,7 +69,7 @@
       var tableData = JSON.parse(JSON.stringify(this.data)).map((item, index) => {
         item._id = index;
         return item;
-      });
+      });      
       var originalData = JSON.parse(JSON.stringify(tableData));
       return {
         originalData, // 原始数据
@@ -82,6 +82,12 @@
       };
     },
     watch: {
+      data() {
+        this.tableData = JSON.parse(JSON.stringify(this.data)).map((item, index) => {
+          item._id = index;
+          return item;
+        });
+      },
       tableData() {
         let data = this.tableData;
         let oldData = this.originalData;
@@ -223,7 +229,7 @@
           this.$emit('save', this.tableData, resolve);
         }).then(() => {
           this.originalData = JSON.parse(JSON.stringify(this.tableData));
-          this.tableData = JSON.parse(JSON.stringify(this.tableData));        
+          // this.tableData = JSON.parse(JSON.stringify(this.tableData));
           this.$emit('update:data', this.tableData);
           this.historyStore = [];
           this.contextMenuVisible = false;
