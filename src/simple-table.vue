@@ -219,12 +219,15 @@
       },
       // 保存
       handleSave() {
-        this.originalData = JSON.parse(JSON.stringify(this.tableData));
-        this.tableData = JSON.parse(JSON.stringify(this.tableData));
-        this.$emit('save', this.tableData);
-        this.$emit('update:data', this.tableData);
-        this.historyStore = [];
-        this.contextMenuVisible = false;
+        new Promise(resolve => {
+          this.$emit('save', this.tableData, resolve);
+        }).then(() => {
+          this.originalData = JSON.parse(JSON.stringify(this.tableData));
+          this.tableData = JSON.parse(JSON.stringify(this.tableData));        
+          this.$emit('update:data', this.tableData);
+          this.historyStore = [];
+          this.contextMenuVisible = false;
+        });
       }
     }
   }
