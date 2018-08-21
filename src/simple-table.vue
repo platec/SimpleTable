@@ -98,6 +98,8 @@
           return item.property;
         });
         let tbody = document.querySelector('tbody');
+        // TODO  对应列排序之后的处理
+        // TODO 检出新增的行，变化的行，删除的行
         this.$nextTick(() => {
           for (let i = 0; i < data.length; i++) {
             let row = data[i];
@@ -167,10 +169,11 @@
           if (this.inputValue !== originalRow[this.position.prop]) {
             let history = {
               new: JSON.parse(JSON.stringify(this.tableData)),
-              old: JSON.parse(JSON.stringify(this.originalData))
+              old: JSON.parse(JSON.stringify(this.originalData)),
+              operation: 'modify'
             };
             // 存储操作历史
-            this.historyStore.push(history);            
+            this.historyStore.push(history);
           }
           var currentRow = this.tableData[this.position.row];
           currentRow[this.position.prop] = this.inputValue;         
@@ -187,17 +190,6 @@
       deleteCurrentRow() {
         // 目前row-contextmenu事件的参数只有row
         // 数据相同时无法区分，添加内部属性_id作区分
-        // 存储操作历史
-        let history = {
-          new: JSON.parse(JSON.stringify(this.tableData)),
-          old: JSON.parse(JSON.stringify(this.originalData))          
-        };
-        this.historyStore.push(history);         
-        this.tableData = this.tableData.filter(item => {
-          return item._id !== this.contextMenuRow._id;
-        });
-        this.originalData = this.originalData.filter(item => {
-          return item._id !== this.contextMenuRow._id;
         new Promise(resolve => {
           this.$emit('delete-row', this.contextMenuRow, resolve);
         }).then(() => {
@@ -253,9 +245,6 @@
           this.historyStore = [];
           this.contextMenuVisible = false;
         });
-      },
-      diff() {
-        // let 
       }
     }
   }
