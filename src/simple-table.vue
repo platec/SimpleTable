@@ -1,14 +1,15 @@
 <template>
   <div>
     <el-table ref="table"
-    border
-    @cell-dblclick="handleModify"
-    @row-contextmenu="handleMenu"
-    @cell-click="handleClick"
-    stripe
-    :size="size"
-    :data="tableData"
-    style="width: 100%">
+      border
+      @cell-dblclick="handleModify"
+      @row-contextmenu="handleMenu"
+      @cell-click="handleClick"
+      @sort-change="handleSortChange"
+      :stripe="stripe"
+      :size="size"
+      :data="tableData"
+      style="width: 100%">
       <slot></slot>
     </el-table>
     
@@ -23,12 +24,12 @@
         </colgroup>
         <thead></thead>
         <tbody>
-          <tr @click="addNewRow">
+          <tr @click="addNewRow" v-if="addable">
             <td style="height:22px;">
               <div class="itemWrapper">插入行</div>
             </td>
           </tr>
-          <tr @click="deleteCurrentRow">
+          <tr @click="deleteCurrentRow" v-if="deletable">
             <td style="height:22px;">
               <div class="itemWrapper">删除当前行</div>
             </td>
@@ -38,7 +39,7 @@
               <div class="itemWrapper">撤销</div>
             </td>
           </tr>
-          <tr @click="handleSave">
+          <tr @click="handleSave" :class="{disabled: historyStore.length === 0}">
             <td style="height:22px;">
               <div class="itemWrapper">保存</div>
             </td>
@@ -63,6 +64,15 @@
       size: {
         type: String,
         default: 'mini'
+      },
+      addable: {
+        default: true
+      },
+      deletable: {
+        default: true
+      },
+      stripe: {
+        default: false
       }
     },
     data() {
@@ -79,11 +89,18 @@
         contextMenuVisible: false,
         contextMenuRow: null,
         historyStore: [],
-        rowsAdded: [], // 新增的行
-        rowsDeleted: [], // 删除的行
-        rowsModified: [], // 修改的行
-        editableColumns: []
+        changedRows: [], // 新增的行
+        addedRows: [], // 删除的行
+        deletedRows: [] // 修改的行
       };
+    },
+    computed: {
+      dataWithId() {
+        return JSON.parse(JSON.stringify(this.data)).map((item, index) => {
+          item._id = index;
+          return item;
+        });
+      }
     },
     watch: {
       data() {
@@ -91,40 +108,104 @@
           item._id = index;
           return item;
         });
+        this.originalData = JSON.parse(JSON.stringify(this.data)).map((item, index) => {
+          item._id = index;
+          return item;
+        });        
       },
       tableData() {
         let data = this.tableData;
-        let oldData = this.originalData = JSON.parse(JSON.stringify(this.data)).map((item, index) => {
-          item._id = index;
-          return item;
+        let origin = this.dataWithId;
+        let originIds = origin.map(item => {
+          return item._id;
+        });
+        let ids = data.map(item => {
+          return item._id;
         });
         let columns = this.$refs.table.columns.map(item => {
           return item.property;
         });
-        let tbody = document.querySelector('tbody');
-        // TODO  对应列排序之后的处理
-        // TODO 检出新增的行，变化的行，删除的行
+        
         this.$nextTick(() => {
-          for (let i = 0; i < data.length; i++) {
+          let tbody = document.querySelector('tbody');
+          for (let i=0; i < data.length; i++) {
             let row = data[i];
-            let oldRow = oldData[i];
-            for (let j in columns) {
-              let column = columns[j];
-              let rowElement = tbody.querySelectorAll('.el-table__row')[i];
-              let cell = rowElement.querySelectorAll('td')[j];
-              if (oldRow === void 0) {
-                cell.classList.add('new');
-              } else {
-                cell.classList.remove('new');
+            let rowElement = tbody.querySelectorAll('.el-table__row')[i];
+            let cells = rowElement.querySelectorAll('td');
+            for (let cell of cells) {
+              cell.classList.remove('new');
+              cell.classList.remove('modified');
+            }            
+            for (let j=0; j < origin.length; j++) {
+              let originalRow = origin[j];
+              // 检查值是否有变化
+              if (row._id === originalRow._id) {
+                for (let columnIndex in columns) {
+                  let column = columns[columnIndex];
+                  if (row[column] !== originalRow[column]) {
+                    if (this.changedRows.filter(item => item._id === row._id).length === 0) {
+                      this.changedRows.push(row);
+                    }
+                  }
+                }
               }
-              if (oldRow !== void 0 && row[column] !== oldRow[column]) {
-                cell.classList.add('modified');
-              } else {
-                cell.classList.remove('modified');
+              // 检查是否有删除的行
+              if (ids.indexOf(originalRow._id) === -1
+                && this.deletedRows.filter(item => item._id === originalRow._id).length === 0) {
+                this.deletedRows.push(originalRow);
+              }
+            }
+            // 检查是否包含新增行
+            if (originIds.indexOf(row._id) === -1) {
+              for (let cell of cells) {
+                cell.classList.add('new');
+              }
+              if (this.addedRows.filter(item => item._id === row._id).length === 0) {
+                this.addedRows.push(row);
               }
             }
           }
         });
+
+        // let addedIds = this.addedRows.map(item => item._id);
+        // let changedIds = this.changedRows.map(item => item._id);
+        // this.$nextTick(() => {
+        //   let tbody = document.querySelector('tbody');
+        //   for (let i=0; i < data.length; i++) {
+        //     let row = data[i];
+        //     if (changedIds.indexOf(row._id) >= 0) {
+        //       let rowElement = tbody.querySelectorAll('.el-table__row')[i];
+        //     }
+        //   }
+        // });
+
+
+        // let oldData = this.originalData;
+        // let columns = this.$refs.table.columns.map(item => {
+        //   return item.property;
+        // });
+        // let tbody = document.querySelector('tbody');
+        // this.$nextTick(() => {
+        //   for (let i = 0; i < data.length; i++) {
+        //     let row = data[i];
+        //     let oldRow = oldData[i];
+        //     for (let j in columns) {
+        //       let column = columns[j];
+        //       let rowElement = tbody.querySelectorAll('.el-table__row')[i];
+        //       let cell = rowElement.querySelectorAll('td')[j];
+        //       if (oldRow === void 0) {
+        //         cell.classList.add('new');
+        //       } else {
+        //         cell.classList.remove('new');
+        //       }
+        //       if (oldRow !== void 0 && row[column] !== oldRow[column]) {
+        //         cell.classList.add('modified');
+        //       } else {
+        //         cell.classList.remove('modified');
+        //       }
+        //     }
+        //   }
+        // });
       }
     },
     methods: {
@@ -140,6 +221,15 @@
           }
         }
         return false;
+      },
+      handleSortChange(options) {
+        this.tableData.sort((a, b) => {
+          if (options.order === 'ascending') {
+            return a[options.prop] > b[options.prop];
+          } else {
+            return a[options.prop] < b[options.prop];
+          }
+        });
       },
       handleModify(row, column, cell, event) {
         if (this.checkColumnEditable(column.property)) {
@@ -222,9 +312,6 @@
           this.tableData = this.tableData.filter(item => {
             return item._id !== this.contextMenuRow._id;
           });
-          this.originalData = this.originalData.filter(item => {
-            return item._id !== this.contextMenuRow._id;
-          });
           this.contextMenuVisible = false;
         });
       },
@@ -255,13 +342,21 @@
       },
       // 保存
       handleSave() {
-        new Promise(resolve => {
-          this.$emit('save', this.tableData, resolve);
-        }).then(() => {
-          this.$emit('update:data', this.tableData);
-          this.historyStore = [];
-          this.contextMenuVisible = false;
-        });
+        if (this.historyStore.length > 0) {
+          new Promise(resolve => {
+            let data = {
+              data: this.tableData,
+              changedRows: this.changedRows,
+              addedRows: this.addedRows,
+              deletedRows: this.deletedRows
+            };
+            this.$emit('save', data, resolve);
+          }).then(() => {
+            this.$emit('update:data', this.tableData);
+            this.historyStore = [];
+            this.contextMenuVisible = false;
+          });
+        }
       }
     }
   }
@@ -269,7 +364,7 @@
 
 <style>
   .inputHolder {
-    position: absolute;
+    position: fixed;
     z-index: 1000;
   }
   textarea {
@@ -279,12 +374,13 @@
     box-shadow: inset 0 0 0 2px #5292f7;
   }
   .contextMenu {
-    position: absolute;
+    position: fixed;
     z-index: 1000;
     color: #363636;
     font-size: 13px;
     background-color: #ffffff;
     cursor: default;
+    box-shadow: 3px 3px 3px #363636;
   }
   .contextMenu table {
     border: 1px solid #ccc;
