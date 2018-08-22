@@ -166,46 +166,6 @@
             }
           }
         });
-
-        // let addedIds = this.addedRows.map(item => item._id);
-        // let changedIds = this.changedRows.map(item => item._id);
-        // this.$nextTick(() => {
-        //   let tbody = document.querySelector('tbody');
-        //   for (let i=0; i < data.length; i++) {
-        //     let row = data[i];
-        //     if (changedIds.indexOf(row._id) >= 0) {
-        //       let rowElement = tbody.querySelectorAll('.el-table__row')[i];
-        //     }
-        //   }
-        // });
-
-
-        // let oldData = this.originalData;
-        // let columns = this.$refs.table.columns.map(item => {
-        //   return item.property;
-        // });
-        // let tbody = document.querySelector('tbody');
-        // this.$nextTick(() => {
-        //   for (let i = 0; i < data.length; i++) {
-        //     let row = data[i];
-        //     let oldRow = oldData[i];
-        //     for (let j in columns) {
-        //       let column = columns[j];
-        //       let rowElement = tbody.querySelectorAll('.el-table__row')[i];
-        //       let cell = rowElement.querySelectorAll('td')[j];
-        //       if (oldRow === void 0) {
-        //         cell.classList.add('new');
-        //       } else {
-        //         cell.classList.remove('new');
-        //       }
-        //       if (oldRow !== void 0 && row[column] !== oldRow[column]) {
-        //         cell.classList.add('modified');
-        //       } else {
-        //         cell.classList.remove('modified');
-        //       }
-        //     }
-        //   }
-        // });
       }
     },
     methods: {
@@ -224,10 +184,13 @@
       },
       handleSortChange(options) {
         this.tableData.sort((a, b) => {
+          let propA = a[options.prop] || '';
+          let propB = b[options.prop] || '';
+          console.log(propA, propB)
           if (options.order === 'ascending') {
-            return a[options.prop] > b[options.prop];
+            return propA - propB;
           } else {
-            return a[options.prop] < b[options.prop];
+            return propA - propB;
           }
         });
       },
