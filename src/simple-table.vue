@@ -81,7 +81,8 @@
         historyStore: [],
         rowsAdded: [], // 新增的行
         rowsDeleted: [], // 删除的行
-        rowsModified: [] // 修改的行
+        rowsModified: [], // 修改的行
+        editableColumns: []
       };
     },
     watch: {
@@ -93,7 +94,10 @@
       },
       tableData() {
         let data = this.tableData;
-        let oldData = this.originalData;
+        let oldData = this.originalData = JSON.parse(JSON.stringify(this.data)).map((item, index) => {
+          item._id = index;
+          return item;
+        });
         let columns = this.$refs.table.columns.map(item => {
           return item.property;
         });
@@ -124,36 +128,51 @@
       }
     },
     methods: {
+      // 检查列是否可编辑
+      checkColumnEditable(column) {
+        for (let slot of this.$slots.default) {
+          if (slot.componentOptions && slot.componentOptions.propsData.prop === column
+            && slot.componentOptions.propsData.className) {
+            let classNames = slot.componentOptions.propsData.className.split(/ +/);
+            if (classNames.indexOf('editable') >= 0) {
+              return true;
+            }
+          }
+        }
+        return false;
+      },
       handleModify(row, column, cell, event) {
-        var offset = nodeOffset(cell);
-        this.inputHolderVisible = true;
-        var inputHolder = document.querySelector('.inputHolder');
-        inputHolder.style.top = offset.top + 'px';
-        inputHolder.style.left = offset.left + 'px';
-        var input = document.querySelector('textarea');
-        // TODO IE,CHROME
-        var cellStyle = window.getComputedStyle(cell);
-        input.style.width = parseInt(cellStyle.width) - 4 + 'px';
-        input.style.height = parseInt(cellStyle.height) - 4 + 'px';
-        input.style.lineHeight = parseInt(cellStyle.height) - 4 + 'px';
+        if (this.checkColumnEditable(column.property)) {
+          var offset = nodeOffset(cell);
+          this.inputHolderVisible = true;
+          var inputHolder = document.querySelector('.inputHolder');
+          inputHolder.style.top = offset.top + 'px';
+          inputHolder.style.left = offset.left + 'px';
+          var input = document.querySelector('textarea');
+          // TODO IE,CHROME
+          var cellStyle = window.getComputedStyle(cell);
+          input.style.width = parseInt(cellStyle.width) - 4 + 'px';
+          input.style.height = parseInt(cellStyle.height) - 4 + 'px';
+          input.style.lineHeight = parseInt(cellStyle.height) - 4 + 'px';
 
-        // input.style.width = cellStyle.width;
-        // input.style.height = cellStyle.height;
-        // input.style.lineHeight = cellStyle.height;        
+          // input.style.width = cellStyle.width;
+          // input.style.height = cellStyle.height;
+          // input.style.lineHeight = cellStyle.height;        
 
-        input.style.fontSize = cellStyle.fontSize;
-        
-        var currentRow = cell.parentElement;
-        var tbody = currentRow.parentElement;
-        var colNum = Array.from(currentRow.querySelectorAll('td')).indexOf(cell);
-        var rowNum = Array.from(tbody.querySelectorAll('tr')).indexOf(currentRow);
-        this.position = {
-          col: colNum,
-          row: rowNum,
-          prop: column.property,
-          cell
-        };
-        this.inputValue = row[column.property];
+          input.style.fontSize = cellStyle.fontSize;
+          
+          var currentRow = cell.parentElement;
+          var tbody = currentRow.parentElement;
+          var colNum = Array.from(currentRow.querySelectorAll('td')).indexOf(cell);
+          var rowNum = Array.from(tbody.querySelectorAll('tr')).indexOf(currentRow);
+          this.position = {
+            col: colNum,
+            row: rowNum,
+            prop: column.property,
+            cell
+          };
+          this.inputValue = row[column.property];
+        }
       },
       handleMenu(row, event) {
         event.preventDefault();
@@ -239,8 +258,6 @@
         new Promise(resolve => {
           this.$emit('save', this.tableData, resolve);
         }).then(() => {
-          this.originalData = JSON.parse(JSON.stringify(this.tableData));
-          // this.tableData = JSON.parse(JSON.stringify(this.tableData));
           this.$emit('update:data', this.tableData);
           this.historyStore = [];
           this.contextMenuVisible = false;
