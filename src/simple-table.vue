@@ -51,7 +51,7 @@
 </template>
 
 <script>
-  import { nodeOffset } from './util';
+  import { nodeOffset, orderBy } from './util';
   import clickoutside from './clickoutside';
 
   export default {
@@ -115,6 +115,12 @@
       },
       tableData() {
         let data = this.tableData;
+        this.diff(data);
+      }
+    },
+    methods: {
+      // 检测变化
+      diff(data) {
         let origin = this.dataWithId;
         let originIds = origin.map(item => {
           return item._id;
@@ -143,6 +149,7 @@
                 for (let columnIndex in columns) {
                   let column = columns[columnIndex];
                   if (row[column] !== originalRow[column]) {
+                    cells[columnIndex].classList.add('modified');
                     if (this.changedRows.filter(item => item._id === row._id).length === 0) {
                       this.changedRows.push(row);
                     }
@@ -166,9 +173,7 @@
             }
           }
         });
-      }
-    },
-    methods: {
+      },
       // 检查列是否可编辑
       checkColumnEditable(column) {
         for (let slot of this.$slots.default) {
@@ -183,16 +188,8 @@
         return false;
       },
       handleSortChange(options) {
-        this.tableData.sort((a, b) => {
-          let propA = a[options.prop] || '';
-          let propB = b[options.prop] || '';
-          console.log(propA, propB)
-          if (options.order === 'ascending') {
-            return propA - propB;
-          } else {
-            return propA - propB;
-          }
-        });
+        this.diff(this.$refs.table.store.states.data);
+        this.$emit('sort-change', options);
       },
       handleModify(row, column, cell, event) {
         if (this.checkColumnEditable(column.property)) {
@@ -247,9 +244,10 @@
             // 存储操作历史
             this.historyStore.push(history);
           }
-          var currentRow = this.tableData[this.position.row];
-          currentRow[this.position.prop] = this.inputValue;         
-          this.tableData.splice(this.position.row, 1, currentRow);
+          let data = JSON.parse(JSON.stringify(this.$refs.table.store.states.data));
+          var currentRow = data[this.position.row];
+          currentRow[this.position.prop] = this.inputValue;
+          this.tableData = data;
         }
         this.inputHolderVisible = false;
       },
@@ -271,8 +269,12 @@
             old: JSON.parse(JSON.stringify(this.originalData)),
             operation: 'delete'     
           };
-          this.historyStore.push(history);         
-          this.tableData = this.tableData.filter(item => {
+          this.historyStore.push(history);
+          let data = JSON.parse(JSON.stringify(this.$refs.table.store.states.data));
+          this.$refs.table.store.states.data = data.filter(item => {
+            return item._id !== this.contextMenuRow._id;
+          });
+          this.tableData = data.filter(item => {
             return item._id !== this.contextMenuRow._id;
           });
           this.contextMenuVisible = false;
@@ -289,8 +291,11 @@
           old: JSON.parse(JSON.stringify(this.originalData)),
           operation: 'add'
         };        
-        this.historyStore.push(history);        
-        this.tableData.push({_id: this.tableData.length});
+        this.historyStore.push(history);
+        let data = JSON.parse(JSON.stringify(this.$refs.table.store.states.data));
+        data.push({_id: this.tableData.length});
+        this.$refs.table.store.states.data = data;
+        this.tableData = data;
         this.contextMenuVisible = false;
         this.$emit('add-row');
       },
@@ -343,7 +348,7 @@
     font-size: 13px;
     background-color: #ffffff;
     cursor: default;
-    box-shadow: 3px 3px 3px #363636;
+    box-shadow: 3px 3px 3px #808080;
   }
   .contextMenu table {
     border: 1px solid #ccc;
@@ -359,8 +364,10 @@
     margin-right: 6px;
   }
   .cell {
-    cursor: default;
     min-height: 23px;
+  }
+  .editable {
+    cursor: pointer;
   }
   .cell-selected {
     box-shadow: inset 0 0 0 2px #5292f7;    
