@@ -62,3 +62,24 @@ Vue.use(SimpleTable);
 ```
 
 ![edit-sample](./screenshot/edit.png)
+
+### 参数说明
+
+兼容element-ui Table的参数
+
+### Table Attributes
+
+| 参数      | 说明                 | 类型    | 可选值 | 默认值 |
+| --------- | -------------------- | ------- | ------ | ------ |
+| addable   | 菜单显示“插入行”     | boolean |        | true   |
+| deletable | 菜单显示“删除当前行” | boolean |        | true   |
+|           |                      |         |        |        |
+
+### Table-column Attributes
+
+| 参数       | 说明                       | 类型   | 可选值 | 默认值 |
+| ---------- | -------------------------- | ------ | ------ | ------ |
+| class-name | 包含”editable“为可编辑的列 | string |        |        |
+|            |                            |        |        |        |
+|            |                            |        |        |        |
+
