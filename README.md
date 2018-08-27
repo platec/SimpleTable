@@ -73,13 +73,25 @@ Vue.use(SimpleTable);
 | --------- | -------------------- | ------- | ------ | ------ |
 | addable   | 菜单显示“插入行”     | boolean |        | true   |
 | deletable | 菜单显示“删除当前行” | boolean |        | true   |
-|           |                      |         |        |        |
+
+**element-ui table的属性可另加**
 
 ### Table-column Attributes
 
 | 参数       | 说明                       | 类型   | 可选值 | 默认值 |
 | ---------- | -------------------------- | ------ | ------ | ------ |
 | class-name | 包含”editable“为可编辑的列 | string |        |        |
-|            |                            |        |        |        |
-|            |                            |        |        |        |
+
+**element-ui table-column的属性可另加**
+
+### Table Events
+
+| 事件名     | 说明                  | 参数                     |
+| ---------- | --------------------- | ------------------------ |
+| delete-row | 删除行，resolve后执行 | row, resolve             |
+| cell-click | 点击单元格            | row, column, cell, event |
+| add-row    | 添加行                |                          |
+| save       | 保存，resolve后执行   | data, resolve            |
+
+**element-ui table组件的事件可另加**
 
