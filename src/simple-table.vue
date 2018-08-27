@@ -1,14 +1,16 @@
 <template>
   <div>
     <el-table ref="table"
-      border
+      :border="border"
       @cell-dblclick="handleModify"
       @row-contextmenu="handleMenu"
       @cell-click="handleClick"
       @sort-change="handleSortChange"
+      :header-row-class-name="headerRowClassName"
       :stripe="stripe"
       :size="size"
       :data="tableData"
+      :check-before-edit="checkBeforeEdit"
       style="width: 100%">
       <slot></slot>
     </el-table>
@@ -73,8 +75,20 @@
       },
       stripe: {
         default: false
+      },
+      headerRowClassName: String,
+      checkBeforeEdit: {
+        type: Function,
+        default: () => true
+      },
+      border: {
+        type: Boolean,
+        default: false
       }
     },
+    // created() {
+    //   this['header-row-class-name'] = this.
+    // },
     data() {
       var tableData = JSON.parse(JSON.stringify(this.data)).map((item, index) => {
         item._id = index;
@@ -192,7 +206,7 @@
         this.$emit('sort-change', options);
       },
       handleModify(row, column, cell, event) {
-        if (this.checkColumnEditable(column.property)) {
+        if (this.checkColumnEditable(column.property) && this.checkBeforeEdit(row, column, cell, event)) {
           var offset = nodeOffset(cell);
           this.inputHolderVisible = true;
           var inputHolder = document.querySelector('.inputHolder');
