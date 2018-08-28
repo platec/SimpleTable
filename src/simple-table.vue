@@ -86,6 +86,12 @@
         default: false
       }
     },
+    mounted() {
+      window.addEventListener('scroll', e => {
+        this.outsideInputHolder();
+        this.outsideMenu();
+      });
+    },
     data() {
       var tableData = JSON.parse(JSON.stringify(this.data)).map((item, index) => {
         item._id = index;
@@ -205,10 +211,14 @@
       handleModify(row, column, cell, event) {
         if (this.checkColumnEditable(column.property) && this.checkBeforeEdit(row, column, cell, event)) {
           var offset = nodeOffset(cell);
+          console.log(cell.offsetParent, cell.offsetLeft, cell.offsetTop)
           this.inputHolderVisible = true;
           var inputHolder = this.$el.querySelector('.inputHolder');
-          inputHolder.style.top = offset.top + 'px';
-          inputHolder.style.left = offset.left + 'px';
+          inputHolder.style.top = (cell.offsetTop + parseInt(window.getComputedStyle(this.$el.querySelector('thead')).height)) + 'px';
+          inputHolder.style.left = cell.offsetLeft + 'px';
+          // inputHolder.style.top = offset.top + 'px';
+          // // x轴有滚动条时减去滚动距离
+          // inputHolder.style.left = (offset.left - window.scrollX) + 'px';
           var input = this.$el.querySelector('textarea');
           // TODO IE,CHROME
           var cellStyle = window.getComputedStyle(cell);
@@ -218,7 +228,7 @@
 
           // input.style.width = cellStyle.width;
           // input.style.height = cellStyle.height;
-          // input.style.lineHeight = cellStyle.height;        
+          // input.style.lineHeight = cellStyle.height;
 
           input.style.fontSize = cellStyle.fontSize;
           
@@ -343,7 +353,7 @@
 
 <style>
   .inputHolder {
-    position: fixed;
+    position: absolute;
     z-index: 1000;
   }
   textarea {
@@ -351,7 +361,7 @@
     overflow-y: hidden;
     border: 0;
     box-shadow: inset 0 0 0 2px #5292f7;
-    padding-left: 5px;   
+    padding-left: 5px;
   }
   .contextMenu {
     position: fixed;
