@@ -11,7 +11,7 @@
       :size="size"
       :data="tableData"
       :check-before-edit="checkBeforeEdit"
-      style="width: 100%">
+      style="width: 100%;">
       <slot></slot>
     </el-table>
     
@@ -68,10 +68,10 @@
         default: 'mini'
       },
       addable: {
-        default: true
+        default: false
       },
       deletable: {
-        default: true
+        default: false
       },
       stripe: {
         default: false
@@ -86,9 +86,6 @@
         default: false
       }
     },
-    // created() {
-    //   this['header-row-class-name'] = this.
-    // },
     data() {
       var tableData = JSON.parse(JSON.stringify(this.data)).map((item, index) => {
         item._id = index;
@@ -147,7 +144,7 @@
         });
         
         this.$nextTick(() => {
-          let tbody = document.querySelector('tbody');
+          let tbody = this.$el.querySelector('tbody');
           for (let i=0; i < data.length; i++) {
             let row = data[i];
             let rowElement = tbody.querySelectorAll('.el-table__row')[i];
@@ -209,10 +206,10 @@
         if (this.checkColumnEditable(column.property) && this.checkBeforeEdit(row, column, cell, event)) {
           var offset = nodeOffset(cell);
           this.inputHolderVisible = true;
-          var inputHolder = document.querySelector('.inputHolder');
+          var inputHolder = this.$el.querySelector('.inputHolder');
           inputHolder.style.top = offset.top + 'px';
           inputHolder.style.left = offset.left + 'px';
-          var input = document.querySelector('textarea');
+          var input = this.$el.querySelector('textarea');
           // TODO IE,CHROME
           var cellStyle = window.getComputedStyle(cell);
           input.style.width = parseInt(cellStyle.width) - 4 + 'px';
@@ -241,7 +238,7 @@
       handleMenu(row, event) {
         event.preventDefault();
         this.contextMenuRow = row;
-        var menu = document.querySelector('.contextMenu');
+        var menu = this.$el.querySelector('.contextMenu');
         this.contextMenuVisible = true;
         menu.style.top = event.clientY + 'px';
         menu.style.left = event.clientX + 'px'; 
@@ -354,6 +351,7 @@
     overflow-y: hidden;
     border: 0;
     box-shadow: inset 0 0 0 2px #5292f7;
+    padding-left: 5px;   
   }
   .contextMenu {
     position: fixed;
@@ -362,6 +360,7 @@
     font-size: 13px;
     background-color: #ffffff;
     cursor: default;
+    text-align: left !important;
     box-shadow: 3px 3px 3px #808080;
   }
   .contextMenu table {
@@ -384,7 +383,7 @@
     cursor: pointer;
   }
   .cell-selected {
-    box-shadow: inset 0 0 0 2px #5292f7;    
+    box-shadow: inset 0 0 0 2px #5292f7; 
   }
   .modified {
     color: red;
