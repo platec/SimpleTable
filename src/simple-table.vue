@@ -341,6 +341,10 @@
             };
             this.$emit('save', data, resolve);
           }).then(() => {
+            // 清空
+            this.changedRows = [];
+            this.addedRows = [];
+            this.deletedRows = [];
             this.$emit('update:data', this.tableData);
             this.historyStore = [];
             this.contextMenuVisible = false;
