@@ -109,3 +109,10 @@ export const orderBy = function(array, sortKey, reverse, sortMethod, sortBy) {
     return order * reverse;
   }).map(item => item.value);
 };
+
+export function isEmpty(obj) {
+  if (obj == null) return true;
+  if (obj.length !== undefined) return obj.length === 0;
+  if (Object.prototype.toString.call(obj) === '[object Number]') return false;
+  return Object.keys(obj).length === 0;
+}

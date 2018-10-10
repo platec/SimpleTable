@@ -15,8 +15,11 @@
       <slot></slot>
     </el-table>
     <div class="inputHolder" v-clickoutside="outsideInputHolder" v-show="inputHolderVisible">
-      <textarea v-model="inputValue"></textarea>
+      <input type="text" id="input"/>
+      <slot name="input">
+      </slot>      
     </div>
+    
     <div class="contextMenu" v-clickoutside="outsideMenu" v-show="contextMenuVisible">
       <table>
         <colgroup>
@@ -57,6 +60,8 @@
 
 <script>
 import clickoutside from './clickoutside';
+import { MessageBox } from 'element-ui';
+import { isEmpty } from './util'
 
 export default {
   name: 'SimpleTable',
@@ -156,6 +161,9 @@ export default {
       let columns = this.$refs.table.columns.map(item => {
         return item.property;
       });
+      this.changedRows = [];
+      this.deletedRows = [];
+      this.addedRows = [];
       this.$nextTick(() => {
         let tbody = this.$el.querySelector('tbody');
         for (let i = 0; i < data.length; i++) {
@@ -200,11 +208,14 @@ export default {
     },
     // 检查列是否可编辑
     checkColumnEditable(column) {
+      return this.checkClassName(column, 'editable');
+    },
+    checkClassName(column, className) {
       for (let slot of this.$slots.default) {
         if (slot.componentOptions && slot.componentOptions.propsData.prop === column &&
         slot.componentOptions.propsData.className) {
           let classNames = slot.componentOptions.propsData.className.split(/ +/);
-          if (classNames.indexOf('editable') >= 0) {
+          if (classNames.indexOf(className) >= 0) {
             return true;
           }
         }
@@ -216,14 +227,26 @@ export default {
       this.$emit('sort-change', options);
     },
     handleModify(row, column, cell, event) {
-      if (this.checkColumnEditable(column.property) && this.checkBeforeEdit(row, column, cell, event)) {
+      // 判断是否是新增的行
+      var isNew = this.addedRows.filter(item => item._id === row._id).length > 0;
+      if (this.checkColumnEditable(column.property) && this.checkBeforeEdit(row, column, cell, event) || isNew) {
+
         this.inputHolderVisible = true;
         var inputHolder = this.$el.querySelector('.inputHolder');
         var theadComputedStyle = window.getComputedStyle(this.$el.querySelector('thead'));
         var theadHeight = theadComputedStyle.height === 'auto' ? this.$el.querySelector('thead').offsetHeight : theadComputedStyle.height;
         inputHolder.style.top = (cell.offsetTop + parseInt(theadHeight)) + 'px';
         inputHolder.style.left = cell.offsetLeft + 'px';
-        var input = this.$el.querySelector('textarea');
+        var input = this.$el.querySelector('#input');
+        if (this.$slots.input) {
+          for (let vnode of this.$slots.input) {
+            if (vnode.data.attrs['prop-name'] === column.property) {
+              input = vnode.elm;
+              break;
+            }
+          }
+        }
+        input.style.display = 'block';
         var cellStyle = window.getComputedStyle(cell);
         var height = parseInt(cellStyle.height) < cell.scrollHeight ? cell.scrollHeight : parseInt(cellStyle.height);
         input.style.width = parseInt(cellStyle.width) - 4 + 'px';
@@ -241,7 +264,7 @@ export default {
           prop: column.property,
           cell
         };
-        this.inputValue = row[column.property];
+        input.value = row[column.property] || '';
       }
     },
     handleMenu(row, event) {
@@ -253,9 +276,17 @@ export default {
       menu.style.left = event.clientX + 'px';
     },
     outsideInputHolder() {
+      var inputs = this.$el.querySelector('.inputHolder').children;
       if (this.inputHolderVisible) {
+        // 寻找当前显示的输入框
+        var value = null;
+        for (let child of inputs) {
+          if (child.style.display === 'block') {
+            value = child.value;
+          }
+        }        
         var originalRow = this.originalData[this.position.row] || {};
-        if (this.inputValue !== originalRow[this.position.prop]) {
+        if (!isEmpty(value) && value !== originalRow[this.position.prop]) {
           let history = {
             new: JSON.parse(JSON.stringify(this.tableData)),
             old: JSON.parse(JSON.stringify(this.originalData)),
@@ -264,12 +295,18 @@ export default {
           // 存储操作历史
           this.historyStore.push(history);
         }
-        let data = JSON.parse(JSON.stringify(this.$refs.table.store.states.data));
-        var currentRow = data[this.position.row];
-        currentRow[this.position.prop] = this.inputValue;
-        this.tableData = data;
+        if (!isEmpty(value)) {
+          let data = JSON.parse(JSON.stringify(this.$refs.table.store.states.data));
+          var currentRow = data[this.position.row];
+          currentRow[this.position.prop] = value;
+          this.tableData = data;
+        }
       }
       this.inputHolderVisible = false;
+      // 隐藏全部输入框
+      for (let child of inputs) {
+        child.style.display = 'none';
+      }
     },
     outsideMenu() {
       if (this.contextMenuVisible) {
@@ -332,7 +369,7 @@ export default {
     handleSave() {
       if (this.historyStore.length > 0) {
         new Promise(resolve => {
-          this.$confirm('确认修改, 是否继续?', '提示', {
+          MessageBox.confirm('确认修改, 是否继续?', '提示', {
             confirmButtonText: '确定',
             cancelButtonText: '取消',
             type: 'warning'
@@ -371,6 +408,13 @@ export default {
     border: 0;
     box-shadow: inset 0 0 0 2px #5292f7;
     padding-left: 5px;
+  }
+  .simple-table input,
+  .simple-table select {
+    border: 0;
+    box-shadow: inset 0 0 0 2px #5292f7;
+    padding-left: 5px;
+    overflow-y: hidden;  
   }
   .simple-table .contextMenu {
     position: fixed;
